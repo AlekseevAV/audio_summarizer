@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+**/.venv
+
+.DS_Store
+bash/
+k9s/
+# Ignore all .npz files (numpy arrays)
+**/*.npz
+

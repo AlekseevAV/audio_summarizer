@@ -1,0 +1,48 @@
+{
+  "manifest_version": 3,
+  "name": "Google Meet Transcription",
+  "version": "1.0",
+  "permissions": [
+    "tabCapture",
+    "offscreen",
+    "downloads",
+    "activeTab",
+    "tabs",
+    "windows",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": ["*://meet.google.com/*", "http://127.0.0.1:8995/"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": "icons/not-recording.png",
+    "default_title": "Start/Stop Recording"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://meet.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "requestPermission.html",
+        "requestPermission.js",
+        "offscreen.html",
+        "offscreen.js",
+        "popup.html",
+        "popup.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

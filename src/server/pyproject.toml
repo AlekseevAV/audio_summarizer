@@ -1,0 +1,14 @@
+[project]
+name = "audio_summarize"
+version = "0.1.0"
+description = "Summarize audio files"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fire==0.6.0",
+    "flask==3.1.0",
+    "huggingface-hub==0.24.7",
+    "librosa==0.10.2.post1",
+    "mlx==0.18.1",
+    "tiktoken==0.8.0",
+]
