@@ -37,10 +37,7 @@ class Tokenizer:
 
 def load_audio(file, sr=16000):
     try:
-        ffmpeg_path = run(["which", "ffmpeg"], capture_output=True, check=True).stdout.decode().strip()
-        if not ffmpeg_path:
-            raise RuntimeError("ffmpeg not found")
-        out = run([ffmpeg_path, "-nostdin", "-threads", "0", "-i", file, "-f", "s16le", "-ac", "1", "-acodec", "pcm_s16le", "-ar", str(sr), "-"], capture_output=True, check=True).stdout
+        out = run(["/opt/homebrew/bin/ffmpeg", "-nostdin", "-threads", "0", "-i", file, "-f", "s16le", "-ac", "1", "-acodec", "pcm_s16le", "-ar", str(sr), "-"], capture_output=True, check=True).stdout
     except CalledProcessError as e:
         raise RuntimeError(f"Failed to load audio: {e.stderr.decode()}") from e
     return mx.array(np.frombuffer(out, np.int16)).flatten().astype(mx.float32) / 32768.0
