@@ -1,19 +1,6 @@
 let isRecording = false;
 let tabId = null;
 
-// Watch for tab updates
-chrome.tabs.onUpdated.addListener((changedTabId, changeInfo, tab) => {
-  if (
-    changedTabId === tabId &&
-    changeInfo.status === "complete" &&
-    isRecording
-  ) {
-    console.log("Tab updated. Stopping recording...");
-    console.log("tab:", tab);
-    stopRecording();
-  }
-});
-
 // Watch for tab removal
 chrome.tabs.onRemoved.addListener((deletedTabId, removeInfo) => {
   if (deletedTabId === tabId && isRecording) {
