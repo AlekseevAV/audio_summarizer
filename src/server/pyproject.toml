@@ -10,5 +10,6 @@ dependencies = [
     "huggingface-hub==0.24.7",
     "librosa==0.10.2.post1",
     "mlx==0.18.1",
+    "python-dateutil>=2.9.0.post0",
     "tiktoken==0.8.0",
 ]
