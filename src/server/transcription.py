@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 HOME_DIR = Path.home()
 TRANSCRIPTIONS_OUTPUT_DIR = HOME_DIR / "Downloads" / "transcriptions"
 TRANSCRIPTION_HEADER_TEMPLATE = """---
-title: {title}
+title: "{title}"
 date: {date}
 participants: {participants}
 topics:
-location: {location}
-description: {description}
+location: "{location}"
+description: "{description}"
 tags:
     - meeting
 ---
@@ -72,11 +72,11 @@ class CallMetadata:
         return cls(
             title=data.get("title", "meeting"),
             datetime=call_datetime,
-            location=data.get("location", "-"),
+            location=data.get("location", ""),
             participants=[
                 Participant.from_dict(p) for p in data.get("participants", [])
             ],
-            description=data.get("description", "-"),
+            description=data.get("description", ""),
         )
 
     @property
