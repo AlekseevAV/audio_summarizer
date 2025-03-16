@@ -5,7 +5,6 @@ from openai import OpenAI
 
 from settings import settings
 
-
 MODEL = "gpt-4o"
 MAX_TOKENS = 8192
 TEMPERATURE = 0.2
@@ -13,10 +12,9 @@ TOP_P = 1
 
 
 def get_api_key() -> str | None:
-    return settings.config.summarization.openai_api_key or os.environ.get("OPENAI_API_KEY")
-
-def is_enabled() -> bool:
-    return settings.config.summarization.is_enabled
+    return settings.config.summarization.openai_api_key or os.environ.get(
+        "OPENAI_API_KEY"
+    )
 
 
 def get_system_prompt(language: str) -> str:
@@ -39,7 +37,7 @@ def summarize(transcription: str, language: str = "ru") -> str:
             {
                 "role": "user",
                 "content": transcription,
-            }
+            },
         ],
         model=MODEL,
         max_tokens=MAX_TOKENS,
@@ -52,6 +50,7 @@ def summarize(transcription: str, language: str = "ru") -> str:
 
 if __name__ == "__main__":
     import sys
+
     file_path = sys.argv[1]
 
     with open(file_path) as f:

@@ -19,22 +19,28 @@ class Summarization(BaseModel):
     openai_api_key: str = ""
     is_enabled: bool = False
     language: Language = Language.RUSSIAN
+    output_dir: str = (
+        (Path.home() / "Downloads" / "summaries").expanduser().resolve().as_posix()
+    )
+
+
+class Transcription(BaseModel):
+    output_dir: str = (
+        (Path.home() / "Downloads" / "transcriptions").expanduser().resolve().as_posix()
+    )
 
 
 class Server(BaseModel):
     port: int = 8995
     host: str = "localhost"
-    debug: bool = True
     use_reloader: bool = False
 
 
 class Config(BaseModel):
-    summarization: Summarization
+    summarization: Summarization = Summarization()
+    transcription: Transcription = Transcription()
     server: Server = Server()
     start_server_on_launch: bool = True
-
-
-EMPTY_CONFIG = Config(summarization=Summarization(), server=Server())
 
 
 class Settings:
@@ -53,13 +59,18 @@ class Settings:
         if self.settings_path.exists():
             with self.settings_path.open("r") as f:
                 settings = json.load(f)
-                return Config.model_validate_json(settings)
-        return EMPTY_CONFIG
+                return Config.model_validate(settings)
+        return Config()
+
+    def reload_settings(self) -> None:
+        """Reload settings from JSON."""
+        self.config = self.load_settings()
 
     def save_settings(self) -> None:
         """Save settings to JSON."""
+        settings = self.config.model_dump_json(indent=2)
         with self.settings_path.open("w") as f:
-            json.dump(self.config.model_dump_json(), f)
+            f.write(settings)
 
 
 settings = Settings()

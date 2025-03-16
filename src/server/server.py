@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 import json
 import logging
-import os
 import signal
 import threading
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 import requests
@@ -19,23 +17,17 @@ from transcription import CallMetadata, TranscriptionResult, transcribe
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-HOME_DIR = Path.home()
-TRANSCRIPTIONS_OUTPUT_DIR_DEFAULT = HOME_DIR / "Downloads" / "transcriptions"
-SUMMARIES_OUTPUT_DIR_DEFAULT = HOME_DIR / "Downloads" / "summaries"
-
-TRANSCRIPTIONS_OUTPUT_DIR = (
-    Path(os.environ.get("TRANSCRIPTIONS_OUTPUT_DIR", TRANSCRIPTIONS_OUTPUT_DIR_DEFAULT))
-    .expanduser()
-    .resolve()
-)
-SUMMARIES_OUTPUT_DIR = (
-    Path(os.environ.get("SUMMARIES_OUTPUT_DIR", SUMMARIES_OUTPUT_DIR_DEFAULT))
-    .expanduser()
-    .resolve()
-)
 
 app = FastAPI()
 server_should_stop = threading.Event()
+
+
+@app.middleware("http")
+async def reload_settings(request, call_next):
+    """Reload settings on every request."""
+    logger.info("Reloading settings")
+    settings.reload_settings()
+    return await call_next(request)
 
 
 def filename_from_metadata(metadata: CallMetadata) -> str:
@@ -85,14 +77,19 @@ async def transcribe_handler(
     call_metadata_instance = CallMetadata.from_dict(raw_metadata)
     transcription_result = transcribe(audio_file=await audio_file.read())
 
+    transcription_dir = Path(settings.config.transcription.output_dir)
+    transcription_dir.mkdir(parents=True, exist_ok=True)
+
     save_transciption_to_file(
         transcription_result=transcription_result,
         call_metadata=call_metadata_instance,
-        target_dir=TRANSCRIPTIONS_OUTPUT_DIR,
+        target_dir=transcription_dir,
     )
 
     summary = ""
     if settings.config.summarization.is_enabled:
+        summary_dir = Path(settings.config.summarization.output_dir)
+        summary_dir.mkdir(parents=True, exist_ok=True)
         summary = summarize(
             transcription=call_metadata_instance.as_header()
             + transcription_result.transcription,
@@ -101,7 +98,7 @@ async def transcribe_handler(
         save_summary_to_file(
             summary=summary,
             call_metadata=call_metadata_instance,
-            target_dir=SUMMARIES_OUTPUT_DIR,
+            target_dir=summary_dir,
         )
 
     return JSONResponse(
@@ -118,26 +115,13 @@ def ping():
     return {"status": "OK"}
 
 
-main_app_lifespan = app.router.lifespan_context
-
-
-@asynccontextmanager
-async def lifespan_wrapper(app):
-    TRANSCRIPTIONS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    SUMMARIES_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    async with main_app_lifespan(app) as maybe_state:
-        yield maybe_state
-
-
-app.router.lifespan_context = lifespan_wrapper
-
-
 def get_server() -> uvicorn.Server:
     config = uvicorn.Config(
         app="server:app",
         host=settings.config.server.host,
         port=settings.config.server.port,
         log_level="info",
+        reload=settings.config.server.use_reloader,
     )
     server = uvicorn.Server(config)
     signal.signal(signal.SIGINT, stop_server_signal)

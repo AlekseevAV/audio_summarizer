@@ -30,11 +30,11 @@ class SettingsWindow(QDialog):
         super().__init__()
 
         self.setWindowTitle("Settings")
-        self.setGeometry(200, 200, 300, 200)
+        self.setGeometry(200, 200, 500, 200)
 
         layout = QVBoxLayout()
 
-        # Summary settings group
+        ### Summary settings group
         self.summary_group = QGroupBox("Summary Settings")
         layout.addWidget(self.summary_group)
         summary_layout = QVBoxLayout()
@@ -48,6 +48,8 @@ class SettingsWindow(QDialog):
         summary_layout.addWidget(self.summary_checkbox)
 
         # OpenAI API key input
+        self.openai_key_label = QLabel("OpenAI API Key:")
+        summary_layout.addWidget(self.openai_key_label)
         self.openai_key_input = QLineEdit()
         self.openai_key_input.setPlaceholderText("Enter OpenAI API Key")
         self.openai_key_input.setText(settings.config.summarization.openai_api_key)
@@ -63,15 +65,67 @@ class SettingsWindow(QDialog):
         )
         summary_layout.addWidget(self.language_dropdown)
 
+        # Summary output directory selection
+        self.output_dir_label = QLabel("Select Output Directory:")
+        summary_layout.addWidget(self.output_dir_label)
+        self.output_dir_input = QLineEdit()
+        self.output_dir_input.setText(settings.config.summarization.output_dir)
+        self.output_dir_input.setPlaceholderText("Enter Output Directory")
+        summary_layout.addWidget(self.output_dir_input)
+        self.output_dir_button = QPushButton("Select Directory")
+        self.output_dir_button.clicked.connect(self.select_summary_output_dir)
+        summary_layout.addWidget(self.output_dir_button)
+
+        ### Transcription settings group
+        self.transcription_group = QGroupBox("Transcription Settings")
+        layout.addWidget(self.transcription_group)
+        transcription_layout = QVBoxLayout()
+        self.transcription_group.setLayout(transcription_layout)
+
+        # Transcription output directory selection
+        self.transcription_output_dir_label = QLabel("Select Output Directory:")
+        transcription_layout.addWidget(self.transcription_output_dir_label)
+        self.transcription_output_dir_input = QLineEdit()
+        self.transcription_output_dir_input.setText(settings.config.transcription.output_dir)
+        self.transcription_output_dir_input.setPlaceholderText("Enter Output Directory")
+        transcription_layout.addWidget(self.transcription_output_dir_input)
+        self.transcription_output_dir_button = QPushButton("Select Directory")
+        self.transcription_output_dir_button.clicked.connect(self.select_transcription_output_dir)
+        transcription_layout.addWidget(self.transcription_output_dir_button)
+
+        ### Server settings group
+        self.server_group = QGroupBox("Server Settings")
+        layout.addWidget(self.server_group)
+        server_layout = QVBoxLayout()
+        self.server_group.setLayout(server_layout)
+
+        # Start server on launch checkbox
+        self.start_server_checkbox = QCheckBox("Start Server on Launch")
+        self.start_server_checkbox.setChecked(settings.config.start_server_on_launch)
+        server_layout.addWidget(self.start_server_checkbox)
+
+        # Server host input
+        self.server_host_input = QLineEdit()
+        self.server_host_input.setPlaceholderText("Enter Server Host")
+        self.server_host_input.setText(settings.config.server.host)
+        server_layout.addWidget(self.server_host_input)
+
+        # Server port input
+        self.server_port_input = QLineEdit()
+        self.server_port_input.setPlaceholderText("Enter Server Port")
+        self.server_port_input.setText(str(settings.config.server.port))
+        server_layout.addWidget(self.server_port_input)
+
+        # Save button
+        self.save_button = QPushButton("Save")
+        self.save_button.setDefault(True)
+        self.save_button.clicked.connect(self.save_settings)
+        layout.addWidget(self.save_button)
+
         # Close button
         self.close_button = QPushButton("Close")
         self.close_button.clicked.connect(self.close)
         layout.addWidget(self.close_button)
-
-        # Save button
-        self.save_button = QPushButton("Save")
-        self.save_button.clicked.connect(self.save_settings)
-        layout.addWidget(self.save_button)
 
         self.setLayout(layout)
 
@@ -79,12 +133,38 @@ class SettingsWindow(QDialog):
         """Toggle the summary checkbox."""
         self.summary_enabled = state == Qt.CheckState.Checked.value
 
+    def select_summary_output_dir(self):
+        """Select the output directory for summaries."""
+        output_dir = QFileDialog.getExistingDirectory(
+            self, "Select Summary Output Directory", self.output_dir_input.text()
+        )
+        if output_dir:
+            self.output_dir_input.setText(output_dir)
+
+    def select_transcription_output_dir(self):
+        """Select the output directory for transcriptions."""
+        output_dir = QFileDialog.getExistingDirectory(
+            self, "Select Transcription Output Directory", self.transcription_output_dir_input.text()
+        )
+        if output_dir:
+            self.transcription_output_dir_input.setText(output_dir)
+
     def save_settings(self):
         """Save the settings to the config file."""
         summary_settings = settings.config.summarization
         summary_settings.openai_api_key = self.openai_key_input.text()
         summary_settings.is_enabled = self.summary_enabled
         summary_settings.language = Language(self.language_dropdown.currentText())
+        summary_settings.output_dir = self.output_dir_input.text()
+
+        transcription_settings = settings.config.transcription
+        transcription_settings.output_dir = self.transcription_output_dir_input.text()
+
+        server_settings = settings.config.server
+        server_settings.host = self.server_host_input.text()
+        server_settings.port = int(self.server_port_input.text())
+        settings.config.start_server_on_launch = self.start_server_checkbox.isChecked()
+
         settings.save_settings()
         self.close()
 
