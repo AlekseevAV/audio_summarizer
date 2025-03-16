@@ -1,0 +1,42 @@
+name: Build and Release macOS App
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install uv and project dependencies
+        run: |
+          pip install uv
+          cd src/server
+          uv install
+
+      - name: Build macOS app with PyInstaller
+        run: |
+          cd src/server
+          pyinstaller app.spec
+
+      - name: Archive .app into .zip
+        run: |
+          cd src/server/dist
+          zip -r AudioSummarizer.zip AudioSummarizer.app
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: src/server/dist/AudioSummarizer.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
