@@ -22,11 +22,13 @@ jobs:
         run: |
           pip install uv
           cd src/server
-          uv pip install -r pyproject.toml --system
+          uv venv
+          uv pip install -r pyproject.toml
 
       - name: Build macOS app with PyInstaller
         run: |
           cd src/server
+          source .venv/bin/activate
           pyinstaller app.spec
 
       - name: Archive .app into .zip
