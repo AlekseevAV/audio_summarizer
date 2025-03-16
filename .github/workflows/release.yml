@@ -22,7 +22,7 @@ jobs:
         run: |
           pip install uv
           cd src/server
-          uv install
+          uv pip install -r pyproject.toml
 
       - name: Build macOS app with PyInstaller
         run: |
