@@ -12,7 +12,6 @@ a = Analysis(
         ('.venv/lib/python3.12/site-packages/mlx', './mlx'),
         ('assets', 'assets'),
         ('prompts', 'prompts'),
-        ('mel_filters.npz', '.'),
     ],
     hiddenimports=['mlx', 'mlx._reprlib_fix', 'mlx._os_warning'],
     hookspath=[],
