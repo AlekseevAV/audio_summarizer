@@ -5,6 +5,7 @@ import math
 import os
 import time
 from functools import lru_cache
+from pathlib import Path
 from subprocess import CalledProcessError, run
 
 import fire
@@ -44,7 +45,8 @@ def load_audio(file, sr=16000):
 
 @lru_cache(maxsize=None)
 def mel_filters(n_mels):
-    path_mel = "mel_filters.npz"
+    tmp_dir = os.environ.get("TMPDIR", "/tmp")
+    path_mel = (Path(tmp_dir) / "mel_filters.npz").as_posix()
     if not os.path.exists(path_mel):
         np.savez_compressed(path_mel, mel_128=librosa.filters.mel(sr=16000, n_fft=400, n_mels=128))
     return mx.load(path_mel)[f"mel_{n_mels}"]

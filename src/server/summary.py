@@ -1,6 +1,9 @@
 import os
+from pathlib import Path
 
 from openai import OpenAI
+
+from settings import settings
 
 
 MODEL = "gpt-4o"
@@ -9,17 +12,22 @@ TEMPERATURE = 0.2
 TOP_P = 1
 
 
+def get_api_key() -> str | None:
+    return settings.config.summarization.openai_api_key or os.environ.get("OPENAI_API_KEY")
+
 def is_enabled() -> bool:
-    return os.environ.get("OPENAI_API_KEY") is not None
+    return settings.config.summarization.is_enabled
 
 
 def get_system_prompt(language: str) -> str:
-    with open(f"prompts/summary_init_{language}.txt") as f:
+    current_dir = Path(__file__).parent
+    prompt_file = current_dir / "prompts" / f"summary_init_{language}.txt"
+    with open(prompt_file) as f:
         return f.read()
 
 
-def summarize(transcription: str, language: str) -> str:
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+def summarize(transcription: str, language: str = "ru") -> str:
+    client = OpenAI(api_key=get_api_key())
     system_prompt = get_system_prompt(language)
 
     chat_completion = client.chat.completions.create(

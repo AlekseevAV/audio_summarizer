@@ -9,3 +9,6 @@ k9s/
 **/*.npz
 
 .env
+
+build/
+dist/
