@@ -34,7 +34,6 @@ jobs:
       - name: Archive .app into .zip
         run: |
           cd src/server/dist
-          ls -la
           zip -r AudioSummarizer.zip AudioSummarizer.app
 
       - name: Create GitHub Release
