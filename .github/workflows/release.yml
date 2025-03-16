@@ -11,6 +11,7 @@ permissions:
 jobs:
   build:
     runs-on: macos-latest
+    environment: production
 
     steps:
       - name: Checkout code
@@ -28,16 +29,52 @@ jobs:
           uv venv
           uv pip install -r pyproject.toml
 
+      - name: Import Certificate
+        run: |
+          echo "$CERTIFICATE_P12" | base64 --decode > cert.p12
+          security import cert.p12 -k ~/Library/Keychains/login.keychain-db -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+
+      - name: Create Keychain Profile for Notarytool
+        run: |
+          xcrun notarytool store-credentials "AC_PASSWORD" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$TEAM_ID" \
+            --password "$APP_SPECIFIC_PASSWORD"
+
       - name: Build macOS app with PyInstaller
         run: |
           cd src/server
           source .venv/bin/activate
           pyinstaller app.spec
 
+      - name: Sign the App
+        run: |
+          cd src/server
+          codesign --deep --force --verify --verbose \
+            --sign "Developer ID Application: Aleksandr Alekseev ($TEAM_ID)" \
+            --options runtime \
+            --entitlements macos/entitlements.plist \
+            dist/AudioSummarizer.app
+
       - name: Archive .app into .zip
         run: |
           cd src/server/dist
-          zip -r AudioSummarizer.zip AudioSummarizer.app
+          ditto -c -k --sequesterRsrc --keepParent AudioSummarizer.app AudioSummarizer.zip
+
+      - name: Notarize the App
+        run: |
+          cd src/server/dist
+          xcrun notarytool submit AudioSummarizer.zip --keychain-profile "AC_PASSWORD" --wait
+
+      - name: Staple Notarization
+        run: |
+          cd src/server/dist
+          xcrun stapler staple AudioSummarizer.app
+
+      - name: Clean up secrets
+        if: always()
+        run: |
+          rm -f cert.p12
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
