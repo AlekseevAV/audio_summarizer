@@ -45,7 +45,7 @@ exe = EXE(
 )
 app = BUNDLE(
     exe,
-    name='Audio Summarizer.app',
+    name='AudioSummarizer.app',
     icon='assets/icon.icns',
     bundle_identifier=None,
 )
