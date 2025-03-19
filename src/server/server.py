@@ -31,8 +31,8 @@ async def reload_settings(request, call_next):
 
 
 def filename_from_metadata(metadata: CallMetadata) -> str:
-    title = metadata.title.replace(" ", "_").lower()
-    return f"{metadata.datetime_str}-{title}.md"
+    title = metadata.title.replace(" ", "_").replace("/", "_")
+    return f"{metadata.datetime_str}-{title}"
 
 
 def save_transciption_to_file(
