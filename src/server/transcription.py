@@ -129,7 +129,7 @@ def transcribe(audio_file: bytes) -> TranscriptionResult:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
         tmp.write(audio_file)
         tmp_path = tmp.name
-        logger.debug("Saved audio file to %s", tmp_path)
+        logger.info("Saved audio file to %s", tmp_path)
         transcription = whisper_transcribe(path_audio=tmp_path, any_lang=True)
 
     transcription_result = TranscriptionResult(transcription=transcription)
