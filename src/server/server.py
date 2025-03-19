@@ -40,7 +40,7 @@ def save_transciption_to_file(
     call_metadata: CallMetadata,
     target_dir: Path,
 ) -> None:
-    file_name = filename_from_metadata(call_metadata)
+    file_name = filename_from_metadata(call_metadata) + ".txt"
 
     header = call_metadata.as_header()
     body = "\n".join(transcription_result.split_transcription_by_sentence())
@@ -57,7 +57,7 @@ def save_summary_to_file(
     call_metadata: CallMetadata,
     target_dir: Path,
 ) -> None:
-    file_name = filename_from_metadata(call_metadata)
+    file_name = filename_from_metadata(call_metadata) + ".md"
     header = call_metadata.as_header()
     path = target_dir / file_name
     logger.info("Saving summary to %s", path)
