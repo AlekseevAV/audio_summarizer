@@ -1,10 +1,12 @@
 let callMetadata = null;
+const CHUNK_DURATION_MS = 30 * 1000; // 30 seconds
 
 chrome.runtime.onMessage.addListener(async (message) => {
   if (message.target === "offscreen") {
+    console.log("[offscreen] Received message:", message);
     switch (message.action) {
       case "start-recording":
-        startRecording(message.data);
+        startRecording(message.streamId);
         break;
       case "stop-recording":
         stopRecording();
@@ -22,9 +24,10 @@ chrome.runtime.onMessage.addListener(async (message) => {
 });
 
 let recorder;
-let recordedChunks = [];
+let recordId = null;
 let micStream = null;
 let tabStream = null;
+let combinedStream = null;
 
 async function micMuteChange(isMuted) {
   if (!micStream) {
@@ -46,6 +49,8 @@ async function startRecording(streamId) {
   if (recorder?.state === "recording") {
     throw new Error("Called startRecording while recording is in progress.");
   }
+
+  recordId = streamId;
 
   tabStream = await navigator.mediaDevices.getUserMedia({
     audio: {
@@ -78,59 +83,81 @@ async function startRecording(streamId) {
   tabSource.connect(destination);
   micSource.connect(destination);
 
-  // Start recording.
-  recorder = new MediaRecorder(destination.stream, { mimeType: "video/webm" });
-  recorder.ondataavailable = onChunkReceived;
-  recorder.onstop = saveRecording;
-  recorder.start();
+  combinedStream = destination.stream;
 
-  window.location.hash = "recording";
+  // Start recording.
+  startChunkRecordingLoop(streamId);
 
   console.log("Recording started");
 }
 
-async function stopRecording() {
-  recorder.stop();
+function startChunkRecordingLoop(recordId) {
+  function recordChunk() {
+    if (!combinedStream) {
+      console.log("Combined stream not available");
+      return;
+    }
+    let newRecorder = new MediaRecorder(combinedStream, {
+      mimeType: "audio/webm",
+    });
+    recorder = newRecorder;
 
-  if (micStream) {
-    micStream.getTracks().forEach((t) => t.stop());
+    newRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        const url = URL.createObjectURL(e.data);
+        chrome.runtime.sendMessage({
+          target: "background",
+          action: "process-recording-chunk",
+          url,
+          recordId,
+          filename: `recording-${recordId}-${Date.now()}.webm`,
+          callMetadata: { ...callMetadata },
+        });
+      }
+    };
+
+    newRecorder.onstop = () => {
+      // Start the next chunk recording
+      setTimeout(recordChunk, 100);
+    };
+
+    newRecorder.start();
+
+    setTimeout(() => {
+      newRecorder.stop();
+    }, CHUNK_DURATION_MS);
   }
 
-  if (tabStream) {
-    tabStream.getTracks().forEach((t) => t.stop());
-  }
-
-  recorder.stream.getTracks().forEach((t) => t.stop());
-
-  window.location.hash = "";
-  console.log("Recording stopped");
+  // Start the first chunk recording
+  recordChunk();
 }
 
-function saveRecording() {
-  console.log("Saving recording");
-  const blob = new Blob(recordedChunks, { type: "audio/webm" });
-  const url = URL.createObjectURL(blob);
+async function stopRecording() {
+  if (recorder) {
+    recorder.stop();
+  }
 
-  // Download the audio file
-  chrome.runtime.sendMessage({
-    target: "background",
-    action: "save-recording",
-    url: url,
-    filename: `google-meet-recording-${Date.now()}.webm`,
-    callMetadata: Object.assign({}, callMetadata),
+  [micStream, tabStream, combinedStream].forEach((stream) => {
+    stream?.getTracks().forEach((t) => t.stop());
   });
 
+  // Wait for the recorder to finish processing
+  const recordingId = recordId;
+  setTimeout(() => {
+    chrome.runtime.sendMessage({
+      target: "background",
+      action: "process-recording-stop",
+      recordId: recordingId,
+    });
+  }, 1000);
+
   // Reset the recording state
-  recordedChunks = [];
+  recorder = null;
+  recordId = null;
   micStream = null;
   tabStream = null;
+  combinedStream = null;
   callMetadata = null;
 
   console.log("Recording saved");
-}
-
-async function onChunkReceived(event) {
-  console.log("Audio chunk received");
-  const chunk = event.data;
-  recordedChunks.push(chunk);
 }

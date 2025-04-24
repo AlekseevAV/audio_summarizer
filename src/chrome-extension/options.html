@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Audio Summarizer Settings</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 16px;
+      }
+      input, textarea {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Audio Summarizer Settings</h2>
+
+    <label for="openaiToken">OpenAI Token:</label>
+    <input type="text" id="openaiToken" placeholder="sk-..." />
+
+    <label for="summaryPrompt">Summary Prompt:</label>
+    <textarea id="summaryPrompt" style="height:400px" placeholder="e.g. Summarize this meeting..."></textarea>
+
+    <hr />
+
+    <button id="saveSettings">Save Settings</button>
+
+    <script src="options.js"></script>
+  </body>
+</html>

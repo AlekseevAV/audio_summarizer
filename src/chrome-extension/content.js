@@ -12,11 +12,15 @@ async function updateCallMetadata() {
   let callMetadata = await gatherCallMetadata();
   console.log("Call metadata gathered from page:", callMetadata);
   // Send the call metadata to the background script
-  chrome.runtime.sendMessage({
-    target: "offscreen",
-    action: "call-metadata",
-    data: callMetadata,
-  });
+  try {
+    chrome.runtime.sendMessage({
+      target: "offscreen",
+      action: "call-metadata",
+      data: callMetadata,
+    });
+  } catch (error) {
+    console.log("Error sending call metadata:", error);
+  }
 }
 
 // Wait for the call fully loaded and trigger the details and people tabs
@@ -95,6 +99,29 @@ async function meetingParticipantsFromDOM() {
   return participants;
 }
 
+// Parse time string
+// "Sat, Apr 12, 2025 9:45 PM - 10:30 PM":
+//   * timeStart = Date("2025-04-12T21:45:00")
+//   * timeEnd = Date("2025-04-12T22:30:00")
+function parseTimeRange(timeString) {
+  // Check if the time string is in the expected format
+  const timeRegex =
+    /^(?:\w{3}, )?\w{3} \d{1,2}, \d{4} \d{1,2}:\d{2}\s?[AP]M - \d{1,2}:\d{2}\s?[AP]M$/;
+  if (!timeRegex.test(timeString)) {
+    console.debug("Invalid time format:", timeString);
+    return { startDate: new Date(), endDate: new Date() };
+  }
+
+  // split by date and time range
+  const [datePart, timeRangePart] = timeString.split(/(?<=\d{4})\s/);
+  const [startTime, endTime] = timeRangePart.split(" - ");
+
+  const startDate = new Date(`${datePart} ${startTime}`);
+  const endDate = new Date(`${datePart} ${endTime}`);
+
+  return { startDate, endDate };
+}
+
 async function gatherCallMetadata() {
   const callMetadata = {
     title: null,
@@ -110,6 +137,11 @@ async function gatherCallMetadata() {
   callMetadata.description = meetingDetails.description;
   callMetadata.time = meetingDetails.time;
   callMetadata.location = meetingDetails.location;
+
+  // Parse the time range
+  const { startDate, endDate } = parseTimeRange(callMetadata.time);
+  callMetadata.timeStart = startDate;
+  callMetadata.timeEnd = endDate;
 
   // Get the call participants
   const callParticipants = await meetingParticipantsFromDOM();
@@ -214,7 +246,7 @@ async function initLeaveCallObserver() {
     return;
   }
 
-  leaveCallButton.addEventListener("click", () => {
+  leaveCallButton.addEventListener("click", async () => {
     console.log("Leaving the call...");
     chrome.runtime.sendMessage({
       target: "background",

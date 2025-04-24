@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meeting Summary</title>
+  <script defer src="result.js"></script>
+  <link rel="stylesheet" href="result.css" />
+</head>
+<body>
+
+  <h2>📄 <span id="header-title"></span> summary <span class="status-badge" id="status"></span></h2>
+  <input type="text" id="displayName" style="display: none;" />
+
+  <!-- Title & Time -->
+  <div class="row">
+    <div class="group" style="flex: 1;">
+      <label for="title">Title</label>
+      <input type="text" id="title" />
+    </div>
+    <div class="group" style="flex: 1;">
+      <label for="time">Time</label>
+      <input type="text" id="time" />
+    </div>
+  </div>
+
+  <!-- Location, Participants, Description -->
+  <div class="row">
+    <div class="group" style="flex: 1;">
+      <label for="location">Location</label>
+      <input type="text" id="location" />
+    </div>
+    <div class="group" style="flex: 1;">
+      <label for="participants">Participants</label>
+      <input type="text" id="participants" />
+    </div>
+  </div>
+
+  <div class="group">
+    <label for="description">Description</label>
+    <textarea id="description"></textarea>
+  </div>
+
+  <!-- Transcription -->
+  <div class="group">
+    <label for="transcription">Transcription</label>
+    <textarea id="transcription"></textarea>
+  </div>
+
+  <!-- Summary -->
+  <div class="group">
+    <label for="summary">Summary</label>
+    <textarea id="summary"></textarea>
+  </div>
+
+  <div class="button-container">
+    <button id="copy-btn">📋 Copy to Clipboard</button>
+    <button id="save-btn">💾 Save to File</button>
+  </div>
+
+</body>
+</html>
