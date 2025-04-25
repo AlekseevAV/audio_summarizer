@@ -5,7 +5,7 @@ from pathlib import Path
 
 import rumps
 
-from gui import run_settings_app
+from gui import run_settings_app, run_transcription_app
 from settings import settings
 from server import get_server, is_server_running, stop_server
 
@@ -75,6 +75,10 @@ class App(rumps.App):
     @rumps.clicked("Settings")
     def open_settings(self, _):
         run_settings_app()
+
+    @rumps.clicked("Transciption App")
+    def open_transcription_app(self, _):
+        run_transcription_app()
 
     @rumps.clicked("Export Logs")
     def export_logs(self, _):

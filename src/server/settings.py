@@ -40,7 +40,7 @@ class Config(BaseModel):
     summarization: Summarization = Summarization()
     transcription: Transcription = Transcription()
     server: Server = Server()
-    start_server_on_launch: bool = True
+    start_server_on_launch: bool = False
 
 
 class Settings:
